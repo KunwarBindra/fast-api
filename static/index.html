@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Order Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"],
+        input[type="number"],
+        select {
+            padding: 5px;
+            margin: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #40ceca;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #9cd725;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .order-status {
+            font-weight: bold;
+            color: #ff9800;
+        }
+        .order-status.completed {
+            color: #4CAF50;
+        }
+        .order-status.cancelled {
+            color: #f44336;
+        }
+        .update-button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+            margin-top: 10px;
+        }
+        .update-button:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Real-Time Order Status Updates</h1>
+
+    <!-- Order Form -->
+    <form id="order-form">
+        <input type="text" id="symbol" placeholder="Symbol" required>
+        <input type="number" id="price" placeholder="Price" step="0.01" required>
+        <input type="number" id="quantity" placeholder="Quantity" required>
+        <select id="order-type">
+            <option value="buy">Buy</option>
+            <option value="sell">Sell</option>
+        </select>
+        <button type="submit">Create Order</button>
+    </form>
+
+    <!-- Order List -->
+    <ul id="order-list">
+        <!-- Real-time orders will be displayed here -->
+    </ul>
+
+    <script>
+        // In-memory storage for orders
+        const orders = {};
+
+        // Dynamic WebSocket URL based on the current host
+        const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/orders/';
+        const ws = new WebSocket(wsUrl);
+
+        // Function to fetch all orders from backend
+        const fetchAllOrders = () => {
+            fetch('/orders/')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(order => {
+                        orders[order.id] = order;
+                    });
+                    renderOrders();
+                })
+                .catch(error => console.error('Error fetching orders:', error));
+        };
+
+        // Function to render the order list
+        const renderOrders = () => {
+            const orderList = document.getElementById('order-list');
+            orderList.innerHTML = ''; // Clear current list
+
+            for (let orderId in orders) {
+                const order = orders[orderId];
+                const listItem = document.createElement('li');
+                listItem.id = `order-${orderId}`;
+                listItem.innerHTML = `
+                    <span>Order ID: ${order.id}</span> | 
+                    <span>Symbol: ${order.symbol}</span> | 
+                    <span>Price: ${order.price}</span> | 
+                    <span>Quantity: ${order.quantity}</span> | 
+                    <span>Type: ${order.order_type}</span> | 
+                    <span class="order-status ${order.status}">${order.status}</span>
+                `;
+
+                // Add Update Button for Pending Orders
+                if (order.status === 'pending') {
+                    const updateButton = document.createElement('button');
+                    updateButton.innerText = 'Mark as Completed';
+                    updateButton.className = 'update-button';
+                    updateButton.addEventListener('click', () => {
+                        updateOrderStatus(order.id, 'completed');
+                    });
+                    listItem.appendChild(updateButton);
+                }
+
+                orderList.appendChild(listItem);
+            }
+        };
+
+        // Function to update order status using REST API
+        const updateOrderStatus = (orderId, status) => {
+            fetch(`/orders/${orderId}?status=${status}`, {
+                method: 'PUT',
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Order updated:', data);
+                orders[orderId].status = status;
+                renderOrders();
+            })
+            .catch((error) => {
+                console.error('Error updating order:', error);
+            });
+        };
+
+        // Handle incoming WebSocket messages
+        ws.onmessage = event => {
+            const data = JSON.parse(event.data);
+            const orderId = data.order_id;
+            const status = data.status;
+
+            // Update order status in memory
+            if (orders[orderId]) {
+                orders[orderId].status = status;
+            } else {
+                // If order is not in memory, fetch all orders again
+                fetchAllOrders();
+            }
+
+            // Re-render the order list
+            renderOrders();
+        };
+
+        // Function to create a new order using REST API
+        const createOrder = (symbol, price, quantity, orderType) => {
+            fetch('/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    symbol: symbol,
+                    price: parseFloat(price),
+                    quantity: parseInt(quantity),
+                    order_type: orderType
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Order created:', data);
+                orders[data.id] = data;
+                renderOrders();
+            })
+            .catch((error) => {
+                console.error('Error creating order:', error);
+            });
+        };
+
+        // Handle form submission for creating new orders
+        document.getElementById('order-form').addEventListener('submit', event => {
+            event.preventDefault();
+            const symbol = document.getElementById('symbol').value;
+            const price = document.getElementById('price').value;
+            const quantity = document.getElementById('quantity').value;
+            const orderType = document.getElementById('order-type').value;
+            createOrder(symbol, price, quantity, orderType);
+
+            // Clear form
+            document.getElementById('symbol').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('quantity').value = '';
+        });
+
+        // Fetch all orders on page load
+        window.onload = fetchAllOrders;
+    </script>
+</body>
+</html>
