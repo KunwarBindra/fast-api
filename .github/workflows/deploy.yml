@@ -67,10 +67,10 @@ jobs:
 
             # Navigate to the project directory or clone if it doesn't exist
             cd /home/${{ secrets.EC2_USER }} || exit 1
-            if [ ! -d "trade-api" ]; then
+            if [ ! -d "fast-api" ]; then
               git clone https://github.com/KunwarBindra/fast-api
             else
-              cd trade-api
+              cd fast-api
               git pull origin main
             fi
             
