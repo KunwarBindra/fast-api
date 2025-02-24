@@ -75,7 +75,7 @@ jobs:
             fi
             
             # Move to the project directory
-            cd /home/${{ secrets.EC2_USER }}/trade-api
+            cd /home/${{ secrets.EC2_USER }}/fast-api
 
             # Use Docker Compose to manage the containers
             docker-compose down
