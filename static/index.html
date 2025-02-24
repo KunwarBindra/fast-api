@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Order Status</title>
+    <title>Blockhouse Assignment - Order Status</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,7 +71,7 @@
     </style>
 </head>
 <body>
-    <h1>Real-Time Order Status Updates</h1>
+    <h1>Blockhouse Assignment - Order Status</h1>
 
     <!-- Order Form -->
     <form id="order-form">
@@ -87,14 +87,13 @@
 
     <!-- Order List -->
     <ul id="order-list">
-        <!-- Real-time orders will be displayed here -->
+        <!-- orders will be displayed here -->
     </ul>
 
     <script>
-        // In-memory storage for orders
         const orders = {};
 
-        // Dynamic WebSocket URL based on the current host
+        // WebSocket URL based on the current host
         const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/orders/';
         const ws = new WebSocket(wsUrl);
 
