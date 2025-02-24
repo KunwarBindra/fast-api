@@ -290,17 +290,7 @@ docker-compose up -d --build
 
 ---
 
-## **License**
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## **Contact**
 **Kunwarjeet Singh Bindra**  
 Email: (bindrak@uci.edu)  
 GitHub: (https://github.com/KunwarBindra)
-
----
-
-## **Acknowledgments**
-- Special thanks to the FastAPI and Docker communities for their awesome tools and documentation.
