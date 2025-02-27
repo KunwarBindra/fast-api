@@ -1,4 +1,4 @@
-# **Fast API - Blockhouse Assignment**
+# **Fast API - Real-time OMS**
 
 ## **Overview**
 The Fast API project is a real-time order management system developed with FastAPI for the backend and Docker for containerization. It utilizes WebSocket connections to deliver live order status updates and PostgreSQL for data storage. Designed for deployment on an AWS EC2 instance, the system uses Docker and Docker Compose, with an integrated CI/CD pipeline powered by GitHub Actions.
